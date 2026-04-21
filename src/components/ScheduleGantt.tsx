@@ -15,7 +15,10 @@ type Props = {
 
 type GroupBy = "worker" | "equipment";
 
-const PX_PER_HOUR = 44;
+/** Дискретные уровни «пикселей на час» шкалы (мин 18 — макс 96), включая прежнее значение по умолчанию 44. */
+const PX_PER_HOUR_LEVELS = [18, 24, 30, 36, 42, 44, 48, 54, 60, 66, 72, 78, 84, 90, 96] as const;
+const DEFAULT_PX_PER_HOUR_INDEX = PX_PER_HOUR_LEVELS.indexOf(44);
+
 const ROW_HEIGHT = 52;
 const RULER_HEIGHT = 40;
 
@@ -94,6 +97,9 @@ type GanttModel = {
 
 export default function ScheduleGantt({ operations }: Props) {
   const [groupBy, setGroupBy] = useState<GroupBy>("worker");
+  const [zoomIndex, setZoomIndex] = useState(DEFAULT_PX_PER_HOUR_INDEX);
+  const pxPerHour = PX_PER_HOUR_LEVELS[zoomIndex] ?? PX_PER_HOUR_LEVELS[DEFAULT_PX_PER_HOUR_INDEX];
+  const zoomPercent = Math.round((pxPerHour / 44) * 100);
 
   const model = useMemo((): GanttModel | null => {
     if (!operations.length) return null;
@@ -113,7 +119,7 @@ export default function ScheduleGantt({ operations }: Props) {
     const { rangeStartMs, rangeEndMs } = timelineRangeSamaraDayBounds(minMs, maxMs);
     const spanMs = rangeEndMs - rangeStartMs;
     const spanHours = spanMs / 3_600_000;
-    const timelineWidth = Math.max(spanHours * PX_PER_HOUR, 320);
+    const timelineWidth = Math.max(spanHours * pxPerHour, 320);
 
     const byRow = new Map<string, ScheduledOperation[]>();
     for (const op of operations) {
@@ -138,7 +144,7 @@ export default function ScheduleGantt({ operations }: Props) {
       rowLabels,
       byRow,
     };
-  }, [operations, groupBy]);
+  }, [operations, groupBy, pxPerHour]);
 
   if (!operations.length) {
     return (
@@ -207,6 +213,74 @@ export default function ScheduleGantt({ operations }: Props) {
                 По оборудованию
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50/80 px-4 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <p
+          className="text-xs text-slate-600"
+          id="schedule-gantt-zoom-label"
+          aria-live="polite"
+        >
+          Масштаб:{" "}
+          <span className="font-medium text-slate-800">
+            {pxPerHour} px/ч
+          </span>{" "}
+          <span className="text-slate-500">({zoomPercent}% от базового)</span>
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div
+            className="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm"
+            role="group"
+            aria-label="Масштаб временной шкалы диаграммы"
+          >
+            <button
+              type="button"
+              onClick={() => setZoomIndex((i) => Math.max(0, i - 1))}
+              disabled={zoomIndex <= 0}
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-700 transition enabled:hover:bg-slate-50 enabled:hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Уменьшить масштаб диаграммы"
+            >
+              Уменьшить
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomIndex((i) => Math.min(PX_PER_HOUR_LEVELS.length - 1, i + 1))}
+              disabled={zoomIndex >= PX_PER_HOUR_LEVELS.length - 1}
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-700 transition enabled:hover:bg-slate-50 enabled:hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Увеличить масштаб диаграммы"
+            >
+              Увеличить
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomIndex(DEFAULT_PX_PER_HOUR_INDEX)}
+              className="rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              aria-label="Сбросить масштаб диаграммы к значению по умолчанию"
+            >
+              Сброс
+            </button>
+          </div>
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-xs">
+            <label htmlFor="schedule-gantt-zoom-slider" className="sr-only">
+              Ползунок масштаба временной шкалы
+            </label>
+            <input
+              id="schedule-gantt-zoom-slider"
+              type="range"
+              min={0}
+              max={PX_PER_HOUR_LEVELS.length - 1}
+              step={1}
+              value={zoomIndex}
+              onChange={(e) => setZoomIndex(Number(e.target.value))}
+              className="h-2 w-full min-w-[8rem] cursor-pointer accent-slate-700"
+              aria-valuemin={0}
+              aria-valuemax={PX_PER_HOUR_LEVELS.length - 1}
+              aria-valuenow={zoomIndex}
+              aria-valuetext={`${pxPerHour} пикселей на час, ${zoomPercent} процентов от базового`}
+              aria-labelledby="schedule-gantt-zoom-label"
+            />
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ApiError,
@@ -9,9 +9,18 @@ import {
 } from "../api";
 import Modal from "../components/Modal";
 import { apiErrorAlertClass, apiErrorTitle } from "../crud/apiErrorUi";
+import {
+  isOrderStatus,
+  orderStatusBadgeClass,
+  orderStatusBadgeText,
+  orderStatusFilterKey,
+  orderStatusLabel,
+  orderStatusPlanningHint,
+} from "../orderStatus";
 import { datetimeLocalToIsoUtc, validatePeriodOrder } from "../planningPeriod";
 import { formatInSamara, TIME_ZONE_UI_LABEL } from "../samaraTime";
-import type { OrderCreate, OrderResponse, TechProcessListItem } from "../types";
+import type { OrderCreate, OrderResponse, OrderStatus, TechProcessListItem } from "../types";
+import { ORDER_STATUS_VALUES } from "../types";
 
 function formatOrderPlannedShort(iso: string): string {
   try {
@@ -27,12 +36,14 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"" | OrderStatus | "unknown">("");
   const [form, setForm] = useState({
     name: "",
     profit: "",
     planned_start_local: "",
     planned_end_local: "",
     tech_process_id: "" as string | number,
+    status: "draft" as OrderStatus,
   });
   const [clientErr, setClientErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,6 +62,11 @@ export default function OrdersPage() {
     }
   }, []);
 
+  const filteredRows = useMemo(() => {
+    if (!statusFilter) return rows;
+    return rows.filter((o) => orderStatusFilterKey(o.status) === statusFilter);
+  }, [rows, statusFilter]);
+
   useEffect(() => {
     void load();
   }, [load]);
@@ -63,6 +79,7 @@ export default function OrdersPage() {
       planned_start_local: "",
       planned_end_local: "",
       tech_process_id: tech[0]?.id ?? "",
+      status: "draft",
     });
     setModalOpen(true);
   };
@@ -103,6 +120,7 @@ export default function OrdersPage() {
         planned_start: startIso,
         planned_end: endIso,
         tech_process_id: tid,
+        status: form.status,
       };
       await createOrder(body);
       setModalOpen(false);
@@ -149,17 +167,48 @@ export default function OrdersPage() {
       ) : null}
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        {!loading && rows.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-end gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2">
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+              <span className="shrink-0">Статус</span>
+              <select
+                className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800 shadow-sm"
+                value={statusFilter}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "") setStatusFilter("");
+                  else if (v === "unknown") setStatusFilter("unknown");
+                  else if (isOrderStatus(v)) setStatusFilter(v);
+                }}
+                aria-label="Фильтр списка заказов по статусу"
+              >
+                <option value="">Все</option>
+                {ORDER_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>
+                    {orderStatusLabel(s)}
+                  </option>
+                ))}
+                <option value="unknown">Неизвестные</option>
+              </select>
+            </label>
+          </div>
+        ) : null}
         {loading ? (
           <p className="p-5 text-sm text-slate-500">Загрузка…</p>
         ) : rows.length === 0 ? (
           <p className="p-5 text-sm text-slate-500">Список пуст.</p>
+        ) : filteredRows.length === 0 ? (
+          <p className="p-5 text-sm text-slate-500" role="status">
+            Нет заказов с выбранным статусом. Сбросьте фильтр «Все».
+          </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[48rem] text-left text-sm">
+            <table className="w-full min-w-[52rem] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">ID</th>
                   <th className="px-3 py-2 font-medium">Название</th>
+                  <th className="px-3 py-2 font-medium">Статус</th>
                   <th className="px-3 py-2 font-medium">Прибыль</th>
                   <th className="px-3 py-2 font-medium">План: начало (Самара)</th>
                   <th className="px-3 py-2 font-medium">План: конец (Самара)</th>
@@ -168,10 +217,26 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {rows.map((o) => (
+                {filteredRows.map((o) => {
+                  const badge = orderStatusBadgeText(o);
+                  return (
                   <tr key={o.id} className="text-slate-800">
                     <td className="px-3 py-2 tabular-nums text-slate-600">{o.id}</td>
                     <td className="px-3 py-2 font-medium">{o.name}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-flex max-w-[12rem] truncate rounded-full px-2 py-0.5 text-[11px] font-semibold ${orderStatusBadgeClass(badge.key)}`}
+                        title={
+                          o.status != null &&
+                          o.status !== "" &&
+                          orderStatusFilterKey(o.status) === "unknown"
+                            ? o.status
+                            : undefined
+                        }
+                      >
+                        {badge.text}
+                      </span>
+                    </td>
                     <td className="px-3 py-2 tabular-nums">
                       {typeof o.profit === "number"
                         ? o.profit.toLocaleString("ru-RU")
@@ -196,7 +261,8 @@ export default function OrdersPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -286,6 +352,26 @@ export default function OrdersPage() {
               ))}
             </select>
           </label>
+          <label className="block text-xs font-medium text-slate-700">
+            Статус
+            <select
+              className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+              value={form.status}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, status: e.target.value as OrderStatus }))
+              }
+              aria-label="Статус нового заказа"
+            >
+              {ORDER_STATUS_VALUES.map((s) => (
+                <option key={s} value={s}>
+                  {orderStatusLabel(s)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="text-[11px] leading-snug text-slate-600">
+            {orderStatusPlanningHint(form.status)}
+          </p>
           <p className="text-[11px] text-slate-500">
             Поля как {TIME_ZONE_UI_LABEL}; в API — ISO UTC (как период на странице «Расписание»).
           </p>

@@ -1,3 +1,18 @@
+/**
+ * Статус заказа в JSON (Python enum на backend).
+ * Неизвестные строки с сервера допускаются в поле `status` ответа — в UI нормализуются.
+ */
+/** Совпадает с backend.order_status.OrderStatus (англ. значения в JSON). */
+export const ORDER_STATUS_VALUES = [
+  "draft",
+  "scheduled",
+  "in_progress",
+  "completed",
+  "cancelled",
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUS_VALUES)[number];
+
 /** Заказ GET/POST/PATCH /api/orders (OrderResponse в backend). */
 export interface OrderResponse {
   id: number;
@@ -6,6 +21,8 @@ export interface OrderResponse {
   planned_start: string;
   planned_end: string;
   tech_process_id: number;
+  /** Строка enum из API; при отсутствии или неизвестном значении UI показывает «неизвестно». */
+  status?: string | null;
 }
 
 /** @deprecated Используйте OrderResponse; оставлено для совместимости имён. */
@@ -17,6 +34,7 @@ export interface OrderCreate {
   planned_start: string;
   planned_end: string;
   tech_process_id: number;
+  status: OrderStatus | string;
 }
 
 export interface OrderUpdate {
@@ -25,6 +43,7 @@ export interface OrderUpdate {
   planned_start?: string | null;
   planned_end?: string | null;
   tech_process_id?: number | null;
+  status?: OrderStatus | string | null;
 }
 
 export interface WorkerResponse {
@@ -47,16 +66,20 @@ export interface EquipmentResponse {
   id: number;
   name: string;
   model: string;
+  /** Участие в планировании; при отсутствии в ответе API считается активным. */
+  is_active?: boolean;
 }
 
 export interface EquipmentCreate {
   name: string;
   model: string;
+  is_active?: boolean;
 }
 
 export interface EquipmentUpdate {
   name?: string | null;
   model?: string | null;
+  is_active?: boolean | null;
 }
 
 export interface TechProcessListItem {

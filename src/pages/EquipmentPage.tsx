@@ -4,6 +4,10 @@ import Modal from "../components/Modal";
 import { apiErrorAlertClass, apiErrorTitle } from "../crud/apiErrorUi";
 import type { EquipmentCreate, EquipmentResponse, EquipmentUpdate } from "../types";
 
+function isEquipmentActive(row: EquipmentResponse): boolean {
+  return row.is_active !== false;
+}
+
 export default function EquipmentPage() {
   const [rows, setRows] = useState<EquipmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +16,7 @@ export default function EquipmentPage() {
   const [editing, setEditing] = useState<EquipmentResponse | null>(null);
   const [form, setForm] = useState({ name: "", model: "" });
   const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,7 +51,11 @@ export default function EquipmentPage() {
     setError(null);
     try {
       if (editing) {
-        const body: EquipmentUpdate = { name: form.name.trim(), model: form.model.trim() };
+        const body: EquipmentUpdate = {
+          name: form.name.trim(),
+          model: form.model.trim(),
+          is_active: isEquipmentActive(editing),
+        };
         await updateEquipment(editing.id, body);
       } else {
         const body: EquipmentCreate = { name: form.name.trim(), model: form.model.trim() };
@@ -69,6 +78,21 @@ export default function EquipmentPage() {
       await load();
     } catch (e) {
       setError(e instanceof ApiError ? e : new ApiError(0, String(e)));
+    }
+  };
+
+  const toggleActive = async (row: EquipmentResponse) => {
+    const next = !isEquipmentActive(row);
+    setTogglingId(row.id);
+    setError(null);
+    try {
+      const body: EquipmentUpdate = { is_active: next };
+      await updateEquipment(row.id, body);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e : new ApiError(0, String(e)));
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -101,22 +125,59 @@ export default function EquipmentPage() {
           <p className="p-5 text-sm text-slate-500">Список пуст.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[28rem] text-left text-sm">
+            <table className="w-full min-w-[36rem] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-2 font-medium">ID</th>
                   <th className="px-4 py-2 font-medium">Название</th>
                   <th className="px-4 py-2 font-medium">Модель</th>
+                  <th className="px-4 py-2 font-medium">Активен</th>
                   <th className="px-4 py-2 font-medium text-right">Действия</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {rows.map((e) => (
-                  <tr key={e.id} className="text-slate-800">
+                {rows.map((e) => {
+                  const active = isEquipmentActive(e);
+                  return (
+                  <tr
+                    key={e.id}
+                    className={`text-slate-800 ${active ? "" : "bg-slate-50/80 opacity-70"}`}
+                  >
                     <td className="px-4 py-2 tabular-nums text-slate-600">{e.id}</td>
-                    <td className="px-4 py-2 font-medium">{e.name}</td>
+                    <td className="px-4 py-2 font-medium">
+                      <span className="inline-flex flex-wrap items-center gap-2">
+                        {e.name}
+                        {!active ? (
+                          <span className="rounded border border-slate-300 bg-white px-1.5 py-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            не в планировании
+                          </span>
+                        ) : null}
+                      </span>
+                    </td>
                     <td className="px-4 py-2">
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">{e.model}</code>
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={active}
+                        disabled={togglingId != null}
+                        aria-busy={togglingId === e.id}
+                        aria-label={
+                          active
+                            ? `Выключить оборудование «${e.name}» из планирования`
+                            : `Включить оборудование «${e.name}» в планирование`
+                        }
+                        onClick={() => void toggleActive(e)}
+                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
+                          active
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {togglingId === e.id ? "…" : active ? "Включено" : "Выключено"}
+                      </button>
                     </td>
                     <td className="px-4 py-2 text-right">
                       <button
@@ -135,7 +196,8 @@ export default function EquipmentPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

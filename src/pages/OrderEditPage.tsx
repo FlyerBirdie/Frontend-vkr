@@ -2,9 +2,16 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, getOrder, listTechProcesses, updateOrder } from "../api";
 import { apiErrorAlertClass, apiErrorTitle } from "../crud/apiErrorUi";
+import {
+  canonicalOrderStatus,
+  isOrderStatus,
+  orderStatusLabel,
+  orderStatusPlanningHint,
+} from "../orderStatus";
 import { dateToDatetimeLocalValue, datetimeLocalToIsoUtc, validatePeriodOrder } from "../planningPeriod";
 import { TIME_ZONE_UI_LABEL } from "../samaraTime";
 import type { OrderUpdate, TechProcessListItem } from "../types";
+import { ORDER_STATUS_VALUES } from "../types";
 
 export default function OrderEditPage() {
   const { id } = useParams();
@@ -22,6 +29,8 @@ export default function OrderEditPage() {
     planned_start_local: "",
     planned_end_local: "",
     tech_process_id: "" as string | number,
+    /** Пустая строка — в API не было статуса; иначе код статуса (в т.ч. нестандартный с сервера). */
+    status: "",
   });
 
   const load = useCallback(async () => {
@@ -42,6 +51,13 @@ export default function OrderEditPage() {
         planned_start_local: dateToDatetimeLocalValue(new Date(o.planned_start)),
         planned_end_local: dateToDatetimeLocalValue(new Date(o.planned_end)),
         tech_process_id: o.tech_process_id,
+        status:
+          o.status != null && o.status !== ""
+            ? (() => {
+                const c = canonicalOrderStatus(o.status);
+                return c === "unknown" ? o.status : c;
+              })()
+            : "",
       });
       setLoaded(true);
     } catch (e) {
@@ -91,6 +107,7 @@ export default function OrderEditPage() {
         planned_start: startIso,
         planned_end: endIso,
         tech_process_id: tid,
+        status: form.status === "" ? null : form.status,
       };
       await updateOrder(orderId, body);
       void navigate("/orders");
@@ -185,6 +202,34 @@ export default function OrderEditPage() {
                 ))}
               </select>
             </label>
+            <label className="block text-xs font-medium text-slate-700">
+              Статус
+              <select
+                className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                value={form.status}
+                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                aria-label="Статус заказа"
+              >
+                <option value="">Не указан (как «неизвестно» в списке)</option>
+                {ORDER_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>
+                    {orderStatusLabel(s)}
+                  </option>
+                ))}
+                {form.status !== "" && !isOrderStatus(form.status) ? (
+                  <option value={form.status}>
+                    {form.status} (из API)
+                  </option>
+                ) : null}
+              </select>
+            </label>
+            <p className="text-[11px] leading-snug text-slate-600">
+              {form.status === ""
+                ? "Статус не задан в ответе API. После сохранения с пустым значением на backend уйдёт null — планировщик может трактовать заказ как неготовый; уточните контракт API."
+                : isOrderStatus(form.status)
+                  ? orderStatusPlanningHint(form.status)
+                  : `Нестандартное значение с сервера. Для предсказуемого планирования выберите один из типовых статусов.`}
+            </p>
           </div>
           <div className="mt-4 flex gap-2">
             <button

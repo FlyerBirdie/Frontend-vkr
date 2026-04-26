@@ -1,11 +1,10 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { clearAccessToken } from "../../authSession";
 import { useScheduleResult } from "../../context/ScheduleResultContext";
-import { TIME_ZONE_UI_LABEL } from "../../samaraTime";
 
 const nav = [
   { to: "/schedule", label: "Расписание" },
-  { to: "/analytics", label: "Отчёт по загрузке" },
+  { to: "/analytics", label: "Отчёт" },
   { to: "/orders", label: "Заказы" },
   { to: "/workers", label: "Рабочие" },
   { to: "/equipment", label: "Оборудование" },
@@ -73,7 +72,7 @@ export default function AppLayout() {
       </div>
 
       <footer className="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        Планирование и даты в интерфейсе — {TIME_ZONE_UI_LABEL}.
+        Сроки и периоды на экране показываются в едином формате даты и времени.
       </footer>
     </div>
   );

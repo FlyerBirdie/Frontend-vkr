@@ -17,7 +17,7 @@ type ScheduleResultContextValue = {
 const ScheduleResultContext = createContext<ScheduleResultContextValue | null>(null);
 
 /**
- * Хранение последнего результата планирования для страниц «Расписание» и «Отчёт» (/analytics).
+ * Хранение последнего результата планирования для «Расписание» и полноэкранного отчёта с метриками (/analytics).
  *
  * Выбран вариант: React Context (провайдер оборачивает маршруты в App.tsx).
  * Данные живут в памяти SPA до полной перезагрузки вкладки (F5); при навигации

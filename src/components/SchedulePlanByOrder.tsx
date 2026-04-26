@@ -6,7 +6,6 @@ import {
   formatInSamaraShort,
   isSamaraWallMidnightUtcTick,
   timelineRangeSamaraDayBounds,
-  TIME_ZONE_UI_LABEL,
 } from "../samaraTime";
 
 type Props = {
@@ -113,7 +112,7 @@ export default function SchedulePlanByOrder({ operations }: Props) {
     return (
       <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
         Нет операций — сначала выполните планирование. Здесь будет цепочка операций по каждому заказу на общей
-        шкале ({TIME_ZONE_UI_LABEL}; дополняет Гантт по ресурсам).
+        шкале времени (дополняет диаграмму по ресурсам).
       </section>
     );
   }
@@ -133,8 +132,8 @@ export default function SchedulePlanByOrder({ operations }: Props) {
       <div className="border-b border-slate-200 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-800">План по заказам</h2>
         <p className="mt-0.5 max-w-3xl text-xs text-slate-500">
-          Одна строка — один заказ; блоки — операции техпроцесса по порядку шагов. Ось — {TIME_ZONE_UI_LABEL}. Удобно
-          видеть сквозной маршрут изделия и паузы между операциями.
+          Одна строка — один заказ; блоки — операции техпроцесса по порядку шагов. Удобно видеть сквозной маршрут
+          изделия и паузы между операциями.
         </p>
       </div>
 
@@ -208,10 +207,10 @@ export default function SchedulePlanByOrder({ operations }: Props) {
                   const e = parseUtc(op.end_time);
                   const left = ((s - rangeStartMs) / spanMs) * 100;
                   const widthPct = Math.max(((e - s) / spanMs) * 100, 0.4);
-                  const label = op.task_name?.trim() || `Шаг ${op.sequence_number}`;
+                  const label = op.task_name?.trim() || "Операция";
                   const tip = [
                     `${label}`,
-                    `${formatInSamaraShort(op.start_time)} — ${formatInSamaraShort(op.end_time)} (${TIME_ZONE_UI_LABEL})`,
+                    `${formatInSamaraShort(op.start_time)} — ${formatInSamaraShort(op.end_time)}`,
                     `${op.worker_name} · ${op.equipment_name}`,
                   ].join("\n");
 
@@ -226,14 +225,13 @@ export default function SchedulePlanByOrder({ operations }: Props) {
                         title={tip}
                       >
                         {widthPct >= 5 ? (
-                          <>
-                            <span className="truncate px-1.5 text-[9px] font-semibold leading-tight">
-                              №{op.sequence_number}
-                            </span>
-                            {widthPct >= 9 ? (
-                              <span className="truncate px-1.5 text-[8px] leading-tight text-white/90">{label}</span>
-                            ) : null}
-                          </>
+                          <span
+                            className={`truncate px-1.5 leading-tight ${
+                              widthPct >= 9 ? "text-[8px] text-white/90" : "text-[9px] font-semibold"
+                            }`}
+                          >
+                            {label}
+                          </span>
                         ) : (
                           <span className="sr-only">{tip}</span>
                         )}

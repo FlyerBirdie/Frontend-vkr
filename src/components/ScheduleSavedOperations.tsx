@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, listOperations } from "../api";
 import { apiErrorAlertClass, apiErrorTitle } from "../crud/apiErrorUi";
-import { formatInSamara, TIME_ZONE_UI_LABEL } from "../samaraTime";
+import { formatInSamara } from "../samaraTime";
 import type { ScheduledOperation } from "../types";
 
-const PAGE_SIZES = [10, 25, 50] as const;
+const PAGE_SIZE = 10;
 
 function formatOpTime(iso: string): string {
   try {
@@ -27,7 +27,6 @@ export default function ScheduleSavedOperations() {
   const [error, setError] = useState<ApiError | null>(null);
   const [nameQuery, setNameQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(25);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,23 +50,24 @@ export default function ScheduleSavedOperations() {
     return rows.filter((op) => (op.order_name ?? "").toLowerCase().includes(q));
   }, [rows, nameQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage((p) => Math.min(Math.max(1, p), totalPages));
-  }, [totalPages, filtered.length, pageSize]);
+  }, [totalPages, filtered.length]);
 
   const pageSlice = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, page, pageSize]);
+    const start = (page - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, page]);
 
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-100 px-4 py-3">
+        <h2 className="text-sm font-semibold text-slate-800">Операции</h2>
+      </div>
+
       <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <p className="text-xs text-slate-600">
-          Сохранённые операции (только просмотр). Время — как в интерфейсе ({TIME_ZONE_UI_LABEL}).
-        </p>
         <label className="block text-xs font-medium text-slate-700">
           Поиск по названию заказа
           <input
@@ -114,7 +114,7 @@ export default function ScheduleSavedOperations() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {pageSlice.map((op, i) => (
-                  <tr key={stableRowKey(op, (page - 1) * pageSize + i)} className="text-slate-800">
+                  <tr key={stableRowKey(op, (page - 1) * PAGE_SIZE + i)} className="text-slate-800">
                     <td className="px-3 py-2 font-medium">{op.order_name}</td>
                     <td className="px-3 py-2">{op.task_name ?? "—"}</td>
                     <td className="px-3 py-2 text-xs">{op.worker_name}</td>
@@ -131,23 +131,6 @@ export default function ScheduleSavedOperations() {
               <span>
                 Страница {page} из {totalPages} · строк: {filtered.length}
               </span>
-              <label className="inline-flex items-center gap-1.5">
-                <span className="text-slate-500">На странице</span>
-                <select
-                  className="rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-800"
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value) as (typeof PAGE_SIZES)[number]);
-                    setPage(1);
-                  }}
-                >
-                  {PAGE_SIZES.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-              </label>
             </div>
             <div className="flex items-center gap-2">
               <button

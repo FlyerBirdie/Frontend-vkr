@@ -18,7 +18,7 @@ import {
   orderStatusPlanningHint,
 } from "../orderStatus";
 import { datetimeLocalToIsoUtc, validatePeriodOrder } from "../planningPeriod";
-import { formatInSamara, TIME_ZONE_UI_LABEL } from "../samaraTime";
+import { formatInSamara } from "../samaraTime";
 import type { OrderCreate, OrderResponse, OrderStatus, TechProcessListItem } from "../types";
 import { ORDER_STATUS_VALUES } from "../types";
 
@@ -217,8 +217,8 @@ export default function OrdersPage() {
                   <th className="px-3 py-2 font-medium">Название</th>
                   <th className="px-3 py-2 font-medium">Статус</th>
                   <th className="px-3 py-2 font-medium">Прибыль</th>
-                  <th className="px-3 py-2 font-medium">План: начало (Самара)</th>
-                  <th className="px-3 py-2 font-medium">План: конец (Самара)</th>
+                  <th className="px-3 py-2 font-medium">План: начало</th>
+                  <th className="px-3 py-2 font-medium">План: конец</th>
                   <th className="px-3 py-2 font-medium">Техпроцесс</th>
                   <th className="px-3 py-2 font-medium text-right">Действия</th>
                 </tr>
@@ -326,7 +326,7 @@ export default function OrdersPage() {
             />
           </label>
           <label className="block text-xs font-medium text-slate-700">
-            План: начало ({TIME_ZONE_UI_LABEL})
+            План: начало
             <input
               type="datetime-local"
               className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
@@ -335,7 +335,7 @@ export default function OrdersPage() {
             />
           </label>
           <label className="block text-xs font-medium text-slate-700">
-            План: конец ({TIME_ZONE_UI_LABEL})
+            План: конец
             <input
               type="datetime-local"
               className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
@@ -381,7 +381,7 @@ export default function OrdersPage() {
             {orderStatusPlanningHint(form.status)}
           </p>
           <p className="text-[11px] text-slate-500">
-            Поля задают плановое окно в часовом поясе интерфейса ({TIME_ZONE_UI_LABEL}), как на странице «Расписание».
+            Плановые сроки задаются так же, как период на странице «Расписание».
           </p>
         </div>
       </Modal>

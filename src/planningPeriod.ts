@@ -4,8 +4,6 @@ import {
   defaultPlanningPeriodSamara,
 } from "./samaraTime";
 
-export { TIME_ZONE, TIME_ZONE_UI_LABEL } from "./samaraTime";
-
 /** Значение для input[type="datetime-local"] по UTC-instant (отображение в Europe/Samara). */
 export const dateToDatetimeLocalValue = dateToDatetimeLocalValueSamara;
 

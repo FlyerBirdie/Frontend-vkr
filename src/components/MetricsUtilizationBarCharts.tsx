@@ -25,13 +25,32 @@ function clampPct(n: number): number {
   return Math.min(100, Math.max(0, n));
 }
 
+/** Не выводим в подписи графика строки, похожие на сырой числовой id из API. */
+function isTechnicalIdFragment(s: string): boolean {
+  const t = s.trim();
+  if (!t) return true;
+  if (/^\d+$/.test(t)) return true;
+  if (/^id\s*[:#]?\s*\d+$/i.test(t)) return true;
+  if (/^#\d+$/.test(t)) return true;
+  return false;
+}
+
+function resourceBarLabel(r: ResourceUtilizationRow): string {
+  const name = (r.name ?? "").trim();
+  const detail = (r.detail ?? "").trim();
+  if (detail && !isTechnicalIdFragment(detail) && detail !== name) {
+    return `${name} · ${detail}`;
+  }
+  return name || detail || "—";
+}
+
 function toChartRows(rows: ResourceUtilizationRow[]): ChartRow[] {
   return [...rows]
     .sort((a, b) => b.utilization_percent - a.utilization_percent)
     .slice(0, TOP_N)
     .map((r) => ({
       id: r.id,
-      label: `${r.name} · ${r.detail}`,
+      label: resourceBarLabel(r),
       utilization: clampPct(r.utilization_percent),
     }));
 }

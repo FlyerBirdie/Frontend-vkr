@@ -14,7 +14,7 @@ import {
   weekAheadFromNow,
 } from "../planningPeriod";
 import { downloadScheduleReportJson } from "../scheduleReportDownload";
-import { formatInSamara, TIME_ZONE_UI_LABEL } from "../samaraTime";
+import { formatInSamara } from "../samaraTime";
 
 function formatPeriodLabels(isoStart: string, isoEnd: string): { start: string; end: string } {
   const o = { dateStyle: "short" as const, timeStyle: "short" as const };
@@ -30,16 +30,6 @@ function scheduleViewFromSearch(params: URLSearchParams): ScheduleView {
   const v = params.get("view");
   if (v === "by_order" || v === "operations") return v;
   return "gantt";
-}
-
-function classifyScheduleError(message: string): "validation" | "network" {
-  if (
-    message.includes("Ошибка запроса или данных") ||
-    /\((400|422)\)/.test(message)
-  ) {
-    return "validation";
-  }
-  return "network";
 }
 
 export default function SchedulePage() {
@@ -116,17 +106,18 @@ export default function SchedulePage() {
       setScheduleResult(result);
     } catch (e) {
       setScheduleResult(null);
-      const msg =
-        e instanceof ApiError
-          ? (e.status === 422 || e.status === 400
-              ? `Ошибка запроса или данных (${e.status}): ${e.humanMessage}`
-              : `Планирование не выполнено (${e.status}): ${e.humanMessage}`)
-          : e instanceof Error
-            ? e.message
-            : "Ошибка планирования";
-      if (classifyScheduleError(msg) === "validation") {
-        setScheduleValidationError(msg);
+      if (e instanceof ApiError) {
+        const isValidation = e.status === 422 || e.status === 400;
+        const msg = isValidation
+          ? `Ошибка в данных: ${e.humanMessage}`
+          : `Не удалось выполнить планирование: ${e.humanMessage}`;
+        if (isValidation) {
+          setScheduleValidationError(msg);
+        } else {
+          setScheduleNetworkError(msg);
+        }
       } else {
+        const msg = e instanceof Error ? e.message : "Ошибка планирования";
         setScheduleNetworkError(msg);
       }
     } finally {
@@ -147,10 +138,7 @@ export default function SchedulePage() {
       <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h1 className="text-lg font-semibold tracking-tight text-slate-900">Расписание</h1>
         <div className="mt-4 w-full max-w-xl rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Плановый период{" "}
-            <span className="font-normal normal-case text-slate-400">({TIME_ZONE_UI_LABEL})</span>
-          </h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Плановый период</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block text-xs text-slate-600">
               <span className="mb-1 block font-medium text-slate-700">Начало</span>
@@ -183,7 +171,7 @@ export default function SchedulePage() {
             </p>
           ) : (
             <p className="mt-2 text-[11px] text-slate-500">
-              Поля задают период в часовом поясе интерфейса ({TIME_ZONE_UI_LABEL}). Конец позже начала.
+              Укажите период планирования: конец должен быть позже начала.
             </p>
           )}
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">

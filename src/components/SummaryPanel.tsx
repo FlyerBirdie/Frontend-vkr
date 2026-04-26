@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { isScheduleReportStubText } from "../scheduleReportStubs";
-import { TIME_ZONE_UI_LABEL } from "../samaraTime";
 import type { ScheduleResponse } from "../types";
 
 export type SummaryPanelProps = {
@@ -74,7 +73,7 @@ export default function SummaryPanel({
                 <span className="text-slate-600"> по </span>
                 {periodDisplay.end}
                 <span className="mt-1 block text-xs font-normal text-slate-500">
-                  Даты в том же виде, что и в расчёте ({TIME_ZONE_UI_LABEL}).
+                  В том же виде, что и в расчёте.
                 </span>
               </p>
             ) : (
@@ -123,7 +122,7 @@ export default function SummaryPanel({
                 to="/analytics"
                 className="font-medium text-slate-700 underline decoration-slate-300 underline-offset-2 hover:text-slate-900 hover:decoration-slate-500"
               >
-                Отчёт по загрузке
+                Отчёт
               </Link>
               .
             </p>

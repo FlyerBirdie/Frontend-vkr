@@ -5,7 +5,6 @@ import {
   formatInSamara,
   isSamaraWallMidnightUtcTick,
   timelineRangeSamaraDayBounds,
-  TIME_ZONE_UI_LABEL,
 } from "../samaraTime";
 
 type Props = {
@@ -38,7 +37,7 @@ function buildTooltipText(op: ScheduledOperation, taskLabel: string): string {
   return [
     `Заказ: ${op.order_name}`,
     `Операция: ${taskLabel}`,
-    `Интервал (${TIME_ZONE_UI_LABEL}): ${formatSamaraRange(op.start_time, op.end_time)}`,
+    `Интервал: ${formatSamaraRange(op.start_time, op.end_time)}`,
     `Рабочий: ${op.worker_name}`,
     `Оборудование: ${op.equipment_name}`,
   ].join("\n");
@@ -61,14 +60,17 @@ function taskBarClasses(taskName: string | null | undefined): string {
   return "bg-slate-600 hover:bg-slate-500 border-slate-800/30";
 }
 
-/** Стабильный ключ строки в зависимости от режима группировки. */
-function rowKey(op: ScheduledOperation, groupBy: GroupBy): string {
+/** Стабильный внутренний ключ строки (не для показа пользователю). */
+function rowGroupKey(op: ScheduledOperation, groupBy: GroupBy): string {
+  return groupBy === "worker" ? `w-${op.worker_id}` : `e-${op.equipment_id}`;
+}
+
+/** Подпись строки: только имя из справочника, без внутренних id. */
+function rowGroupLabel(op: ScheduledOperation, groupBy: GroupBy): string {
   if (groupBy === "worker") {
-    const w = op.worker_name?.trim();
-    return w || `worker:${op.worker_id}`;
+    return op.worker_name?.trim() || "Рабочий (без названия в справочнике)";
   }
-  const e = op.equipment_name?.trim();
-  return e || `equipment:${op.equipment_id}`;
+  return op.equipment_name?.trim() || "Оборудование (без названия в справочнике)";
 }
 
 /** Стабильный ключ элемента списка / бара (числовой id или составной). */
@@ -79,14 +81,19 @@ function stableOperationKey(op: ScheduledOperation): string {
   return `op-${op.order_id}-${op.task_id}-${op.sequence_number}-${op.start_time}`;
 }
 
+type GanttRow = {
+  key: string;
+  label: string;
+  operations: ScheduledOperation[];
+};
+
 type GanttModel = {
   rangeStartMs: number;
   rangeEndMs: number;
   spanMs: number;
   timelineWidth: number;
   hourTicks: Date[];
-  rowLabels: string[];
-  byRow: Map<string, ScheduledOperation[]>;
+  rows: GanttRow[];
 };
 
 export default function ScheduleGantt({ operations }: Props) {
@@ -115,17 +122,29 @@ export default function ScheduleGantt({ operations }: Props) {
     const spanHours = spanMs / 3_600_000;
     const timelineWidth = Math.max(spanHours * pxPerHour, 320);
 
-    const byRow = new Map<string, ScheduledOperation[]>();
+    const byKey = new Map<string, ScheduledOperation[]>();
     for (const op of operations) {
-      const k = rowKey(op, groupBy);
-      const list = byRow.get(k) ?? [];
+      const k = rowGroupKey(op, groupBy);
+      const list = byKey.get(k) ?? [];
       list.push(op);
-      byRow.set(k, list);
+      byKey.set(k, list);
     }
-    const rowLabels = [...byRow.keys()].sort((a, b) => a.localeCompare(b, "ru"));
-    for (const row of rowLabels) {
-      byRow.get(row)!.sort((x, y) => parseUtc(x.start_time) - parseUtc(y.start_time));
+
+    const rows: GanttRow[] = [];
+    for (const [key, ops] of byKey) {
+      ops.sort((x, y) => parseUtc(x.start_time) - parseUtc(y.start_time));
+      const op0 = ops[0]!;
+      rows.push({
+        key,
+        label: rowGroupLabel(op0, groupBy),
+        operations: ops,
+      });
     }
+    rows.sort((a, b) => {
+      const c = a.label.localeCompare(b.label, "ru");
+      if (c !== 0) return c;
+      return a.key.localeCompare(b.key);
+    });
 
     const hourTicks = buildUtcHourTicks(rangeStartMs, rangeEndMs);
 
@@ -135,15 +154,14 @@ export default function ScheduleGantt({ operations }: Props) {
       spanMs,
       timelineWidth,
       hourTicks,
-      rowLabels,
-      byRow,
+      rows,
     };
   }, [operations, groupBy, pxPerHour]);
 
   if (!operations.length) {
     return (
       <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-        Запустите планирование — здесь появится диаграмма загрузки по времени (ось: {TIME_ZONE_UI_LABEL}).
+        Запустите планирование — здесь появится диаграмма загрузки по времени.
       </section>
     );
   }
@@ -156,7 +174,7 @@ export default function ScheduleGantt({ operations }: Props) {
     );
   }
 
-  const { rangeStartMs, spanMs, timelineWidth, hourTicks, rowLabels, byRow } = model;
+  const { rangeStartMs, spanMs, timelineWidth, hourTicks, rows } = model;
 
   const headerResource =
     groupBy === "worker" ? "Рабочий" : "Оборудование";
@@ -168,8 +186,8 @@ export default function ScheduleGantt({ operations }: Props) {
           <div>
             <h2 className="text-sm font-semibold text-slate-800">Расписание операций</h2>
             <p className="mt-0.5 max-w-3xl text-xs text-slate-500">
-              Цвета по типу операции: резка — синий, гибка — зелёный, сварка — янтарный, покраска —
-              фиолетовый. Ось — {TIME_ZONE_UI_LABEL}; во всплывающей подсказке — интервал операции.
+              Цвета по типу операции: резка — синий, гибка — зелёный, сварка — янтарный, покраска — фиолетовый.
+              Во всплывающей подсказке — время и название операции.
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
@@ -314,14 +332,14 @@ export default function ScheduleGantt({ operations }: Props) {
             })}
           </div>
 
-          {rowLabels.map((row) => (
-            <Fragment key={row}>
+          {rows.map((row) => (
+            <Fragment key={row.key}>
               <div
                 className="sticky left-0 z-20 border-b border-r border-slate-200 bg-white px-3 py-2 shadow-[4px_0_12px_-4px_rgba(15,23,42,0.1)]"
                 style={{ minHeight: ROW_HEIGHT }}
               >
                 <span className="line-clamp-2 text-xs font-medium leading-snug text-slate-700">
-                  {row}
+                  {row.label}
                 </span>
               </div>
               <div
@@ -343,7 +361,7 @@ export default function ScheduleGantt({ operations }: Props) {
                     />
                   );
                 })}
-                {(byRow.get(row) ?? []).map((op) => {
+                {row.operations.map((op) => {
                   const s = parseUtc(op.start_time);
                   const e = parseUtc(op.end_time);
                   const left = ((s - rangeStartMs) / spanMs) * 100;

@@ -9,7 +9,6 @@ import {
   orderStatusPlanningHint,
 } from "../orderStatus";
 import { dateToDatetimeLocalValue, datetimeLocalToIsoUtc, validatePeriodOrder } from "../planningPeriod";
-import { TIME_ZONE_UI_LABEL } from "../samaraTime";
 import type { OrderUpdate, TechProcessListItem } from "../types";
 import { ORDER_STATUS_VALUES } from "../types";
 
@@ -174,7 +173,7 @@ export default function OrderEditPage() {
               />
             </label>
             <label className="block text-xs font-medium text-slate-700">
-              План: начало ({TIME_ZONE_UI_LABEL})
+              План: начало
               <input
                 type="datetime-local"
                 className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
@@ -183,7 +182,7 @@ export default function OrderEditPage() {
               />
             </label>
             <label className="block text-xs font-medium text-slate-700">
-              План: конец ({TIME_ZONE_UI_LABEL})
+              План: конец
               <input
                 type="datetime-local"
                 className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"

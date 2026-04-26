@@ -5,7 +5,6 @@ import { ScheduleResultProvider } from "./context/ScheduleResultContext";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import EquipmentPage from "./pages/EquipmentPage";
 import LoginPage from "./pages/LoginPage";
-import OperationsPage from "./pages/OperationsPage";
 import OrderEditPage from "./pages/OrderEditPage";
 import OrdersPage from "./pages/OrdersPage";
 import SchedulePage from "./pages/SchedulePage";
@@ -30,7 +29,10 @@ export default function App() {
               <Route path="equipment" element={<EquipmentPage />} />
               <Route path="tech-processes" element={<TechProcessesPage />} />
               <Route path="tech-processes/:id" element={<TechProcessDetailPage />} />
-              <Route path="operations" element={<OperationsPage />} />
+              <Route
+                path="operations"
+                element={<Navigate to="/schedule?view=operations" replace />}
+              />
             </Route>
           </Route>
         </Routes>

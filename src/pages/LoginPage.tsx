@@ -22,7 +22,7 @@ export default function LoginPage() {
     try {
       const res = await loginPlanner(username, password);
       if (!res.access_token?.trim()) {
-        setError("Сервер не вернул access_token.");
+        setError("Сервер не вернул данные для входа.");
         return;
       }
       setAccessToken(res.access_token.trim());
@@ -48,7 +48,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-center text-lg font-semibold text-slate-900">Вход планировщика</h1>
         <p className="mt-1 text-center text-xs text-slate-500">
-          Учётные данные из настроек backend (например, переменные окружения демо-пользователя).
+          Используйте логин и пароль, выданные администратором системы.
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>

@@ -5,12 +5,11 @@ import { TIME_ZONE_UI_LABEL } from "../../samaraTime";
 
 const nav = [
   { to: "/schedule", label: "Расписание" },
-  { to: "/analytics", label: "Анализ" },
+  { to: "/analytics", label: "Отчёт по загрузке" },
   { to: "/orders", label: "Заказы" },
   { to: "/workers", label: "Рабочие" },
   { to: "/equipment", label: "Оборудование" },
   { to: "/tech-processes", label: "Техпроцессы" },
-  { to: "/operations", label: "Операции (БД)" },
 ] as const;
 
 function linkClass(isActive: boolean): string {
@@ -74,9 +73,7 @@ export default function AppLayout() {
       </div>
 
       <footer className="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        Планирование и даты в интерфейсе — {TIME_ZONE_UI_LABEL}; в JSON — timezone-aware ISO (часто UTC). Прокси Vite:{" "}
-        <code className="rounded bg-slate-100 px-1">/api</code> →{" "}
-        <code className="rounded bg-slate-100 px-1">localhost:8000</code>
+        Планирование и даты в интерфейсе — {TIME_ZONE_UI_LABEL}.
       </footer>
     </div>
   );

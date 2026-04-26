@@ -14,9 +14,8 @@ function MetricsBlock({ title, metrics }: { title: string; metrics: ScheduleRepo
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
         <p className="mt-1 text-[11px] text-slate-500">
-          Фонд периода: <span className="tabular-nums">{metrics.available_minutes_per_resource}</span> мин на
-          ресурс (как в API). Столбцы — <code className="rounded bg-slate-100 px-1">utilization_percent</code> (топ{" "}
-          {8}).
+          Фонд периода: <span className="tabular-nums">{metrics.available_minutes_per_resource}</span> минут на
+          ресурс (как в расчёте). Столбцы — доля загрузки в процентах (топ {8}).
         </p>
       </div>
 
@@ -85,8 +84,7 @@ export default function ScheduleAnalysisDashboard({ schedule }: Props) {
   if (!schedule) {
     return (
       <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-        Запустите планирование — здесь появится дашборд: загрузка ресурсов, узкие места и рекомендации из поля{" "}
-        <code className="rounded bg-slate-100 px-1">metrics</code>.
+        Запустите планирование — здесь появится сводка: загрузка ресурсов, узкие места и рекомендации из расчёта.
       </section>
     );
   }
@@ -94,8 +92,7 @@ export default function ScheduleAnalysisDashboard({ schedule }: Props) {
   if (!metrics) {
     return (
       <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        В ответе API нет блока <code className="rounded bg-amber-100 px-1">metrics</code> — обновите backend или
-        проверьте версию контракта <code className="rounded bg-amber-100 px-1">ScheduleResponse</code>.
+        В результате расчёта нет сводки по загрузке — обновите приложение или обратитесь к администратору.
       </section>
     );
   }
@@ -104,10 +101,10 @@ export default function ScheduleAnalysisDashboard({ schedule }: Props) {
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-800">Анализ загрузки</h2>
+      <h2 className="text-sm font-semibold text-slate-800">Отчёт по загрузке ресурсов</h2>
       <p className="mt-0.5 text-xs text-slate-500">
-        Данные из ответа планирования (<code className="rounded bg-slate-100 px-1">metrics</code>): средняя
-        загрузка, сводка по пулу ресурсов, диаграммы по сотрудникам и оборудованию, узкие места.
+        По данным последнего расчёта: средняя загрузка, сводка по пулу ресурсов, диаграммы по сотрудникам и
+        оборудованию, узкие места.
       </p>
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

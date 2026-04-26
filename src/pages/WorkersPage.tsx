@@ -104,10 +104,9 @@ export default function WorkersPage() {
           <p className="p-5 text-sm text-slate-500">Список пуст.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[28rem] text-left text-sm">
+            <table className="w-full min-w-[22rem] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 font-medium">ID</th>
                   <th className="px-4 py-2 font-medium">Имя</th>
                   <th className="px-4 py-2 font-medium">Профессия</th>
                   <th className="px-4 py-2 font-medium text-right">Действия</th>
@@ -116,7 +115,6 @@ export default function WorkersPage() {
               <tbody className="divide-y divide-slate-100">
                 {rows.map((w) => (
                   <tr key={w.id} className="text-slate-800">
-                    <td className="px-4 py-2 tabular-nums text-slate-600">{w.id}</td>
                     <td className="px-4 py-2 font-medium">{w.name}</td>
                     <td className="px-4 py-2">{w.profession}</td>
                     <td className="px-4 py-2 text-right">

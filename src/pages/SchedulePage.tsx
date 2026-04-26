@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, runScheduling } from "../api";
 import ScheduleGantt from "../components/ScheduleGantt";
 import SchedulePlanByOrder from "../components/SchedulePlanByOrder";
+import ScheduleSavedOperations from "../components/ScheduleSavedOperations";
 import SummaryPanel from "../components/SummaryPanel";
 import { useScheduleResult } from "../context/ScheduleResultContext";
 import {
@@ -23,7 +24,13 @@ function formatPeriodLabels(isoStart: string, isoEnd: string): { start: string; 
   };
 }
 
-type ScheduleView = "gantt" | "by_order";
+type ScheduleView = "gantt" | "by_order" | "operations";
+
+function scheduleViewFromSearch(params: URLSearchParams): ScheduleView {
+  const v = params.get("view");
+  if (v === "by_order" || v === "operations") return v;
+  return "gantt";
+}
 
 function classifyScheduleError(message: string): "validation" | "network" {
   if (
@@ -37,6 +44,20 @@ function classifyScheduleError(message: string): "validation" | "network" {
 
 export default function SchedulePage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const scheduleView = scheduleViewFromSearch(searchParams);
+
+  const setScheduleView = useCallback(
+    (id: ScheduleView) => {
+      if (id === "gantt") {
+        setSearchParams({}, { replace: true });
+      } else {
+        setSearchParams({ view: id }, { replace: true });
+      }
+    },
+    [setSearchParams],
+  );
+
   const { schedule, setScheduleResult } = useScheduleResult();
 
   const init = initialFormPeriodFromDefault();
@@ -47,7 +68,6 @@ export default function SchedulePage() {
   const [scheduling, setScheduling] = useState(false);
   const [scheduleNetworkError, setScheduleNetworkError] = useState<string | null>(null);
   const [scheduleValidationError, setScheduleValidationError] = useState<string | null>(null);
-  const [scheduleView, setScheduleView] = useState<ScheduleView>("gantt");
 
   const periodDisplay = useMemo(() => {
     if (!schedule?.period_start || !schedule?.period_end) return null;
@@ -125,98 +145,84 @@ export default function SchedulePage() {
   return (
     <div className="flex flex-col gap-6">
       <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-              Визуализация расписания операций
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm text-slate-600">
-              Корпусные изделия из листового металла: демо планирования по технологии
-              (резка → гибка → сварка → покраска) с учётом рабочих и оборудования.
-            </p>
-          </div>
-          <div className="w-full min-w-0 max-w-md rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Плановый период{" "}
-              <span className="font-normal normal-case text-slate-400">({TIME_ZONE_UI_LABEL})</span>
-            </h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="block text-xs text-slate-600">
-                <span className="mb-1 block font-medium text-slate-700">Начало</span>
-                <input
-                  type="datetime-local"
-                  value={periodStartLocal}
-                  onChange={(e) => {
-                    setPeriodStartLocal(e.target.value);
-                    setClientPeriodError(null);
-                  }}
-                  className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300/60"
-                />
-              </label>
-              <label className="block text-xs text-slate-600">
-                <span className="mb-1 block font-medium text-slate-700">Конец</span>
-                <input
-                  type="datetime-local"
-                  value={periodEndLocal}
-                  onChange={(e) => {
-                    setPeriodEndLocal(e.target.value);
-                    setClientPeriodError(null);
-                  }}
-                  className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300/60"
-                />
-              </label>
-            </div>
-            {clientPeriodError ? (
-              <p className="mt-2 text-sm text-amber-800" role="alert">
-                {clientPeriodError}
-              </p>
-            ) : (
-              <p className="mt-2 text-[11px] text-slate-500">
-                Поля трактуются как {TIME_ZONE_UI_LABEL}; в <code className="rounded bg-slate-100 px-1">POST /api/schedule</code>{" "}
-                уходит ISO UTC (timezone-aware). Конец &gt; начала.
-              </p>
-            )}
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-              <button
-                type="button"
-                onClick={() => void handleRunScheduling()}
-                disabled={scheduling}
-                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {scheduling ? (
-                  <>
-                    <span
-                      className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
-                      aria-hidden
-                    />
-                    Планирование…
-                  </>
-                ) : (
-                  "Запустить планирование"
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleResetWeekDemo}
-                disabled={scheduling}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
-              >
-                Сбросить: неделя вперёд
-              </button>
-              <button
-                type="button"
-                disabled={!schedule || scheduling}
-                onClick={() => {
-                  if (schedule) downloadScheduleReportJson(schedule);
+        <h1 className="text-lg font-semibold tracking-tight text-slate-900">Расписание</h1>
+        <div className="mt-4 w-full max-w-xl rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Плановый период{" "}
+            <span className="font-normal normal-case text-slate-400">({TIME_ZONE_UI_LABEL})</span>
+          </h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs text-slate-600">
+              <span className="mb-1 block font-medium text-slate-700">Начало</span>
+              <input
+                type="datetime-local"
+                value={periodStartLocal}
+                onChange={(e) => {
+                  setPeriodStartLocal(e.target.value);
+                  setClientPeriodError(null);
                 }}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Скачать JSON отчёта
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              POST <code className="rounded bg-slate-100 px-1">/api/schedule</code>
+                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300/60"
+              />
+            </label>
+            <label className="block text-xs text-slate-600">
+              <span className="mb-1 block font-medium text-slate-700">Конец</span>
+              <input
+                type="datetime-local"
+                value={periodEndLocal}
+                onChange={(e) => {
+                  setPeriodEndLocal(e.target.value);
+                  setClientPeriodError(null);
+                }}
+                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300/60"
+              />
+            </label>
+          </div>
+          {clientPeriodError ? (
+            <p className="mt-2 text-sm text-amber-800" role="alert">
+              {clientPeriodError}
             </p>
+          ) : (
+            <p className="mt-2 text-[11px] text-slate-500">
+              Поля задают период в часовом поясе интерфейса ({TIME_ZONE_UI_LABEL}). Конец позже начала.
+            </p>
+          )}
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <button
+              type="button"
+              onClick={() => void handleRunScheduling()}
+              disabled={scheduling}
+              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {scheduling ? (
+                <>
+                  <span
+                    className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                    aria-hidden
+                  />
+                  Планирование…
+                </>
+              ) : (
+                "Запустить планирование"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleResetWeekDemo}
+              disabled={scheduling}
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+            >
+              Сбросить: неделя вперёд
+            </button>
+            <button
+              type="button"
+              disabled={!schedule || scheduling}
+              onClick={() => {
+                if (schedule) downloadScheduleReportJson(schedule);
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Скачать отчёт в файл
+            </button>
           </div>
         </div>
       </header>
@@ -230,7 +236,7 @@ export default function SchedulePage() {
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="font-medium">Ошибка проверки данных (API)</p>
+                  <p className="font-medium">Ошибка проверки данных</p>
                   <p className="mt-0.5 whitespace-pre-wrap">{scheduleValidationError}</p>
                 </div>
                 <button
@@ -276,18 +282,19 @@ export default function SchedulePage() {
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div
-            className="inline-flex w-full max-w-xl flex-col gap-1.5 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:w-auto sm:flex-row sm:items-center sm:justify-between sm:pr-2"
+            className="inline-flex w-full max-w-2xl flex-col gap-1.5 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:w-auto sm:flex-row sm:items-center sm:justify-between sm:pr-2"
             role="tablist"
             aria-label="Вид представления расписания"
           >
             <span className="hidden px-2 text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:inline">
               Вид
             </span>
-            <div className="flex flex-1 rounded-lg bg-slate-50 p-0.5">
+            <div className="flex flex-1 flex-wrap rounded-lg bg-slate-50 p-0.5">
               {(
                 [
                   { id: "gantt" as const, label: "Гантт (ресурсы)" },
                   { id: "by_order" as const, label: "План по заказам" },
+                  { id: "operations" as const, label: "Операции" },
                 ] as const
               ).map(({ id, label }) => (
                 <button
@@ -296,7 +303,7 @@ export default function SchedulePage() {
                   role="tab"
                   aria-selected={scheduleView === id}
                   onClick={() => setScheduleView(id)}
-                  className={`flex-1 rounded-md px-3 py-2 text-center text-xs font-medium transition sm:flex-none sm:px-4 ${
+                  className={`rounded-md px-3 py-2 text-center text-xs font-medium transition sm:px-3 ${
                     scheduleView === id
                       ? "bg-white text-slate-900 shadow-sm"
                       : "text-slate-600 hover:text-slate-900"
@@ -313,7 +320,7 @@ export default function SchedulePage() {
             onClick={() => void navigate("/analytics")}
             className="w-full shrink-0 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
-            Открыть полный анализ
+            Открыть отчёт
           </button>
         </div>
 
@@ -323,6 +330,7 @@ export default function SchedulePage() {
         {scheduleView === "by_order" ? (
           <SchedulePlanByOrder operations={schedule?.operations ?? []} />
         ) : null}
+        {scheduleView === "operations" ? <ScheduleSavedOperations /> : null}
       </div>
     </div>
   );

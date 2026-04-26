@@ -67,6 +67,14 @@ export default function OrdersPage() {
     return rows.filter((o) => orderStatusFilterKey(o.status) === statusFilter);
   }, [rows, statusFilter]);
 
+  const techProcessNameById = useMemo(() => {
+    const m = new Map<number, string>();
+    for (const t of tech) {
+      m.set(t.id, t.name);
+    }
+    return m;
+  }, [tech]);
+
   useEffect(() => {
     void load();
   }, [load]);
@@ -203,16 +211,15 @@ export default function OrdersPage() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[52rem] text-left text-sm">
+            <table className="w-full min-w-[44rem] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-3 py-2 font-medium">ID</th>
                   <th className="px-3 py-2 font-medium">Название</th>
                   <th className="px-3 py-2 font-medium">Статус</th>
                   <th className="px-3 py-2 font-medium">Прибыль</th>
                   <th className="px-3 py-2 font-medium">План: начало (Самара)</th>
                   <th className="px-3 py-2 font-medium">План: конец (Самара)</th>
-                  <th className="px-3 py-2 font-medium">ТП</th>
+                  <th className="px-3 py-2 font-medium">Техпроцесс</th>
                   <th className="px-3 py-2 font-medium text-right">Действия</th>
                 </tr>
               </thead>
@@ -221,7 +228,6 @@ export default function OrdersPage() {
                   const badge = orderStatusBadgeText(o);
                   return (
                   <tr key={o.id} className="text-slate-800">
-                    <td className="px-3 py-2 tabular-nums text-slate-600">{o.id}</td>
                     <td className="px-3 py-2 font-medium">{o.name}</td>
                     <td className="px-3 py-2">
                       <span
@@ -244,7 +250,9 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-3 py-2 tabular-nums text-slate-600">{formatOrderPlannedShort(o.planned_start)}</td>
                     <td className="px-3 py-2 tabular-nums text-slate-600">{formatOrderPlannedShort(o.planned_end)}</td>
-                    <td className="px-3 py-2 tabular-nums">{o.tech_process_id}</td>
+                    <td className="px-3 py-2 text-slate-700">
+                      {techProcessNameById.get(o.tech_process_id) ?? "—"}
+                    </td>
                     <td className="px-3 py-2 text-right">
                       <Link
                         to={`/orders/${o.id}/edit`}
@@ -347,7 +355,7 @@ export default function OrdersPage() {
               <option value="">— выберите —</option>
               {tech.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.id}: {t.name}
+                  {t.name}
                 </option>
               ))}
             </select>
@@ -373,7 +381,7 @@ export default function OrdersPage() {
             {orderStatusPlanningHint(form.status)}
           </p>
           <p className="text-[11px] text-slate-500">
-            Поля как {TIME_ZONE_UI_LABEL}; в API — ISO UTC (как период на странице «Расписание»).
+            Поля задают плановое окно в часовом поясе интерфейса ({TIME_ZONE_UI_LABEL}), как на странице «Расписание».
           </p>
         </div>
       </Modal>

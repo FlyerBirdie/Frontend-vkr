@@ -76,10 +76,9 @@ export default function TechProcessesPage() {
           <p className="p-5 text-sm text-slate-500">Список пуст.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[20rem] text-left text-sm">
+            <table className="w-full min-w-[18rem] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 font-medium">ID</th>
                   <th className="px-4 py-2 font-medium">Название</th>
                   <th className="px-4 py-2 font-medium text-right">Действия</th>
                 </tr>
@@ -87,7 +86,6 @@ export default function TechProcessesPage() {
               <tbody className="divide-y divide-slate-100">
                 {rows.map((r) => (
                   <tr key={r.id} className="text-slate-800">
-                    <td className="px-4 py-2 tabular-nums text-slate-600">{r.id}</td>
                     <td className="px-4 py-2 font-medium">{r.name}</td>
                     <td className="px-4 py-2 text-right">
                       <Link

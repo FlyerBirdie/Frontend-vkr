@@ -121,7 +121,7 @@ export default function SchedulePlanByOrder({ operations }: Props) {
   if (!model) {
     return (
       <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        Не удалось построить план по заказам: проверьте корректность времени в ответе API.
+        Не удалось построить план по заказам: проверьте корректность времени в данных расписания.
       </section>
     );
   }
@@ -133,8 +133,8 @@ export default function SchedulePlanByOrder({ operations }: Props) {
       <div className="border-b border-slate-200 px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-800">План по заказам</h2>
         <p className="mt-0.5 max-w-3xl text-xs text-slate-500">
-          Одна строка — один заказ; блоки — операции ТП по порядку <code className="rounded bg-slate-100 px-1">sequence</code>
-          . Ось — {TIME_ZONE_UI_LABEL}. Удобно видеть сквозной маршрут изделия и паузы между операциями.
+          Одна строка — один заказ; блоки — операции техпроцесса по порядку шагов. Ось — {TIME_ZONE_UI_LABEL}. Удобно
+          видеть сквозной маршрут изделия и паузы между операциями.
         </p>
       </div>
 
@@ -183,7 +183,6 @@ export default function SchedulePlanByOrder({ operations }: Props) {
                 style={{ minHeight: ROW_HEIGHT }}
               >
                 <div className="text-xs font-semibold leading-snug text-slate-800">{row.orderName}</div>
-                <div className="mt-0.5 text-[10px] tabular-nums text-slate-500">ID {row.orderId}</div>
               </div>
               <div
                 className="relative border-b border-slate-100 bg-white"

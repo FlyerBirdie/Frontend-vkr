@@ -29,13 +29,13 @@ export default function OrderEditPage() {
     planned_start_local: "",
     planned_end_local: "",
     tech_process_id: "" as string | number,
-    /** Пустая строка — в API не было статуса; иначе код статуса (в т.ч. нестандартный с сервера). */
+    /** Пустая строка — статус не пришёл с сервера; иначе код статуса (в т.ч. нестандартный). */
     status: "",
   });
 
   const load = useCallback(async () => {
     if (!Number.isFinite(orderId)) {
-      setError(new ApiError(404, "Некорректный id заказа."));
+      setError(new ApiError(404, "Некорректная ссылка на заказ."));
       setLoading(false);
       return;
     }
@@ -121,7 +121,7 @@ export default function OrderEditPage() {
   if (!Number.isFinite(orderId)) {
     return (
       <p className="text-sm text-red-700" role="alert">
-        Некорректный id.
+        Некорректная ссылка на заказ.
       </p>
     );
   }
@@ -131,7 +131,12 @@ export default function OrderEditPage() {
       <Link to="/orders" className="text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline">
         ← К списку заказов
       </Link>
-      <h1 className="text-xl font-semibold text-slate-900">Заказ #{orderId}</h1>
+      <header className="space-y-1">
+        <h1 className="text-xl font-semibold text-slate-900">Редактирование заказа</h1>
+        {loaded ? (
+          <p className="text-sm text-slate-600">{form.name.trim() || "Без названия"}</p>
+        ) : null}
+      </header>
 
       {error ? (
         <div
@@ -197,7 +202,7 @@ export default function OrderEditPage() {
               >
                 {tech.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.id}: {t.name}
+                    {t.name}
                   </option>
                 ))}
               </select>
@@ -218,14 +223,14 @@ export default function OrderEditPage() {
                 ))}
                 {form.status !== "" && !isOrderStatus(form.status) ? (
                   <option value={form.status}>
-                    {form.status} (из API)
+                    {form.status} (как пришло с сервера)
                   </option>
                 ) : null}
               </select>
             </label>
             <p className="text-[11px] leading-snug text-slate-600">
               {form.status === ""
-                ? "Статус не задан в ответе API. После сохранения с пустым значением на backend уйдёт null — планировщик может трактовать заказ как неготовый; уточните контракт API."
+                ? "Статус не задан. Если оставить пустым и сохранить, планировщик может не учитывать заказ — уточните у администратора."
                 : isOrderStatus(form.status)
                   ? orderStatusPlanningHint(form.status)
                   : `Нестандартное значение с сервера. Для предсказуемого планирования выберите один из типовых статусов.`}

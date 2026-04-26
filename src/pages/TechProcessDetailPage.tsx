@@ -35,7 +35,7 @@ export default function TechProcessDetailPage() {
 
   const load = useCallback(async () => {
     if (!Number.isFinite(tpId)) {
-      setError(new ApiError(404, "Некорректный id ТП."));
+      setError(new ApiError(404, "Некорректная ссылка на техпроцесс."));
       setLoading(false);
       return;
     }
@@ -150,7 +150,7 @@ export default function TechProcessDetailPage() {
   };
 
   if (!Number.isFinite(tpId)) {
-    return <p role="alert">Некорректный id.</p>;
+    return <p role="alert">Некорректная ссылка на техпроцесс.</p>;
   }
 
   return (
@@ -176,7 +176,10 @@ export default function TechProcessDetailPage() {
       ) : detail ? (
         <>
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h1 className="text-xl font-semibold text-slate-900">ТП #{detail.id}</h1>
+            <h1 className="text-xl font-semibold text-slate-900">
+              {rename.trim() || "Технологический процесс"}
+            </h1>
+            <p className="mt-1 text-xs text-slate-500">Редактирование названия и задач ТП</p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
               <label className="block flex-1 text-xs font-medium text-slate-700">
                 Название
@@ -213,10 +216,9 @@ export default function TechProcessDetailPage() {
               <p className="p-5 text-sm text-slate-500">Задач пока нет.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[44rem] text-left text-sm">
+                <table className="w-full min-w-[38rem] text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-3 py-2 font-medium">ID</th>
                       <th className="px-3 py-2 font-medium">Шаг</th>
                       <th className="px-3 py-2 font-medium">Мин</th>
                       <th className="px-3 py-2 font-medium">Профессия</th>
@@ -228,7 +230,6 @@ export default function TechProcessDetailPage() {
                   <tbody className="divide-y divide-slate-100">
                     {detail.tasks.map((t) => (
                       <tr key={t.id} className="text-slate-800">
-                        <td className="px-3 py-2 tabular-nums text-slate-600">{t.id}</td>
                         <td className="px-3 py-2 tabular-nums">{t.sequence_number}</td>
                         <td className="px-3 py-2 tabular-nums">{t.duration_minutes}</td>
                         <td className="px-3 py-2">{t.profession}</td>

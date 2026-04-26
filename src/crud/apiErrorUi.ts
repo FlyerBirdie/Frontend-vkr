@@ -14,9 +14,9 @@ export function apiErrorAlertClass(e: ApiError): string {
 }
 
 export function apiErrorTitle(e: ApiError): string {
-  if (e.isNetwork) return "API недоступен";
-  if (e.isConflict) return "Конфликт (409)";
-  if (e.isValidation) return "Ошибка валидации (400/422)";
-  if (e.status === 404) return "Не найдено (404)";
+  if (e.isNetwork) return "Сервер недоступен";
+  if (e.isConflict) return "Конфликт при сохранении";
+  if (e.isValidation) return "Ошибка валидации данных";
+  if (e.status === 404) return "Запись не найдена";
   return `Ошибка (${e.status})`;
 }

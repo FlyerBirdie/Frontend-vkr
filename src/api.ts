@@ -24,7 +24,7 @@ import type {
   WorkerUpdate,
 } from "./types";
 
-/** Базовый префикс API (Vite proxy: /api → backend). */
+/** Базовый префикс запросов к серверу приложения. */
 export const API_BASE = "/api";
 
 /** Ошибка HTTP API с человекочитаемым текстом (422/409/404/сеть). */
@@ -80,7 +80,7 @@ async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Promise<T
   } catch {
     throw new ApiError(
       0,
-      "API недоступен: не удалось связаться с сервером (проверьте сеть и прокси Vite → backend).",
+      "Сервер недоступен: проверьте подключение к сети.",
     );
   }
 
@@ -104,7 +104,7 @@ async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Promise<T
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new ApiError(res.status, "Ответ сервера не является JSON");
+    throw new ApiError(res.status, "Ответ сервера имеет неожиданный формат.");
   }
 }
 

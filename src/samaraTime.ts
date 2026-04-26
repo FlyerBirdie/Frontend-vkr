@@ -7,7 +7,7 @@
 export const TIME_ZONE = "Europe/Samara";
 
 /** Подпись в UI рядом с датами/временем для пользователя. */
-export const TIME_ZONE_UI_LABEL = "Самара (UTC+4)";
+export const TIME_ZONE_UI_LABEL = "Самара (+4 ч)";
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");

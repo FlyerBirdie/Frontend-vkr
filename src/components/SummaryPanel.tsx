@@ -74,11 +74,11 @@ export default function SummaryPanel({
                 <span className="text-slate-600"> по </span>
                 {periodDisplay.end}
                 <span className="mt-1 block text-xs font-normal text-slate-500">
-                  Время: {TIME_ZONE_UI_LABEL}; в API — ISO UTC.
+                  Даты в том же виде, что и в расчёте ({TIME_ZONE_UI_LABEL}).
                 </span>
               </p>
             ) : (
-              <p className="mt-1 text-slate-500">Запустите планирование — здесь будет период из ответа API.</p>
+              <p className="mt-1 text-slate-500">Запустите планирование — здесь будет выбранный период расчёта.</p>
             )}
           </div>
 
@@ -118,12 +118,12 @@ export default function SummaryPanel({
 
           {schedule ? (
             <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Подробная загрузка ресурсов — на странице{" "}
+              Подробная загрузка ресурсов — в разделе{" "}
               <Link
                 to="/analytics"
                 className="font-medium text-slate-700 underline decoration-slate-300 underline-offset-2 hover:text-slate-900 hover:decoration-slate-500"
               >
-                Анализ
+                Отчёт по загрузке
               </Link>
               .
             </p>
@@ -150,11 +150,10 @@ export default function SummaryPanel({
                 Исключённые заказы
               </h3>
               <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full min-w-[32rem] text-left text-sm">
+                <table className="w-full min-w-[24rem] text-left text-sm">
                   <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
                       <th className="px-3 py-2 font-medium">Заказ</th>
-                      <th className="px-3 py-2 font-medium">ID</th>
                       <th className="px-3 py-2 font-medium">Код</th>
                       <th className="px-3 py-2 font-medium">Причина</th>
                     </tr>
@@ -163,7 +162,6 @@ export default function SummaryPanel({
                     {excludedList(schedule).map((row, i) => (
                       <tr key={`${row.order_id}-${row.code}-${i}`} className="text-slate-800">
                         <td className="px-3 py-2 font-medium">{row.order_name}</td>
-                        <td className="px-3 py-2 tabular-nums text-slate-600">{row.order_id}</td>
                         <td className="px-3 py-2">
                           <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">{row.code}</code>
                         </td>

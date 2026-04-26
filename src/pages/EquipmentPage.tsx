@@ -125,10 +125,9 @@ export default function EquipmentPage() {
           <p className="p-5 text-sm text-slate-500">Список пуст.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[36rem] text-left text-sm">
+            <table className="w-full min-w-[28rem] text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-4 py-2 font-medium">ID</th>
                   <th className="px-4 py-2 font-medium">Название</th>
                   <th className="px-4 py-2 font-medium">Модель</th>
                   <th className="px-4 py-2 font-medium">Активен</th>
@@ -143,7 +142,6 @@ export default function EquipmentPage() {
                     key={e.id}
                     className={`text-slate-800 ${active ? "" : "bg-slate-50/80 opacity-70"}`}
                   >
-                    <td className="px-4 py-2 tabular-nums text-slate-600">{e.id}</td>
                     <td className="px-4 py-2 font-medium">
                       <span className="inline-flex flex-wrap items-center gap-2">
                         {e.name}

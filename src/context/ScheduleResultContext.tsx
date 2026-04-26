@@ -9,7 +9,7 @@ import {
 import type { ScheduleResponse } from "../types";
 
 type ScheduleResultContextValue = {
-  /** Последний успешный ответ POST /api/schedule (или null). */
+  /** Последний успешный результат планирования (или null). */
   schedule: ScheduleResponse | null;
   setScheduleResult: (value: ScheduleResponse | null) => void;
 };
@@ -17,13 +17,13 @@ type ScheduleResultContextValue = {
 const ScheduleResultContext = createContext<ScheduleResultContextValue | null>(null);
 
 /**
- * Хранение последнего результата планирования для страниц «Расписание» и «Анализ».
+ * Хранение последнего результата планирования для страниц «Расписание» и «Отчёт» (/analytics).
  *
  * Выбран вариант: React Context (провайдер оборачивает маршруты в App.tsx).
  * Данные живут в памяти SPA до полной перезагрузки вкладки (F5); при навигации
- * между /schedule и /analytics состояние сохраняется. Альтернатива —
+ * между /schedule и страницей отчёта (/analytics) состояние сохраняется. Альтернатива —
  * sessionStorage (ключ вида planning_last_result) для переживания F5, но тогда
- * нужна сериализация/миграция схемы ответа API.
+ * нужна сериализация/миграция схемы ответа сервера.
  */
 export function ScheduleResultProvider({ children }: { children: ReactNode }) {
   const [schedule, setSchedule] = useState<ScheduleResponse | null>(null);

@@ -3,7 +3,6 @@ import type { ScheduledOperation } from "../types";
 import {
   buildUtcHourTicks,
   formatInSamara,
-  formatIsoUtcShort,
   isSamaraWallMidnightUtcTick,
   timelineRangeSamaraDayBounds,
   TIME_ZONE_UI_LABEL,
@@ -35,16 +34,11 @@ function formatSamaraRange(startIso: string, endIso: string): string {
   return `${formatInSamara(startIso, o)} — ${formatInSamara(endIso, o)}`;
 }
 
-function formatUtcRangeShort(startIso: string, endIso: string): string {
-  return `${formatIsoUtcShort(startIso)} — ${formatIsoUtcShort(endIso)} (UTC)`;
-}
-
 function buildTooltipText(op: ScheduledOperation, taskLabel: string): string {
   return [
     `Заказ: ${op.order_name}`,
     `Операция: ${taskLabel}`,
     `Интервал (${TIME_ZONE_UI_LABEL}): ${formatSamaraRange(op.start_time, op.end_time)}`,
-    `Интервал (API, UTC): ${formatUtcRangeShort(op.start_time, op.end_time)}`,
     `Рабочий: ${op.worker_name}`,
     `Оборудование: ${op.equipment_name}`,
   ].join("\n");
@@ -77,7 +71,7 @@ function rowKey(op: ScheduledOperation, groupBy: GroupBy): string {
   return e || `equipment:${op.equipment_id}`;
 }
 
-/** Стабильный ключ элемента списка / бара (id из API или составной). */
+/** Стабильный ключ элемента списка / бара (числовой id или составной). */
 function stableOperationKey(op: ScheduledOperation): string {
   if (typeof op.id === "number" && Number.isFinite(op.id)) {
     return `op-${op.id}`;
@@ -149,8 +143,7 @@ export default function ScheduleGantt({ operations }: Props) {
   if (!operations.length) {
     return (
       <section className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-        Запустите планирование — здесь появится диаграмма загрузки по времени (ось: {TIME_ZONE_UI_LABEL}; в
-        подсказках — также UTC из API).
+        Запустите планирование — здесь появится диаграмма загрузки по времени (ось: {TIME_ZONE_UI_LABEL}).
       </section>
     );
   }
@@ -158,9 +151,7 @@ export default function ScheduleGantt({ operations }: Props) {
   if (!model) {
     return (
       <section className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
-        Не удалось построить шкалу времени: проверьте поля{" "}
-        <code className="rounded bg-amber-100 px-1">start_time</code> /{" "}
-        <code className="rounded bg-amber-100 px-1">end_time</code> в ответе API.
+        Не удалось построить шкалу времени: проверьте корректность времени операций в расписании.
       </section>
     );
   }
@@ -178,7 +169,7 @@ export default function ScheduleGantt({ operations }: Props) {
             <h2 className="text-sm font-semibold text-slate-800">Расписание операций</h2>
             <p className="mt-0.5 max-w-3xl text-xs text-slate-500">
               Цвета по типу операции: резка — синий, гибка — зелёный, сварка — янтарный, покраска —
-              фиолетовый. Ось — {TIME_ZONE_UI_LABEL}; подсказка дублирует интервал в UTC (как в API).
+              фиолетовый. Ось — {TIME_ZONE_UI_LABEL}; во всплывающей подсказке — интервал операции.
             </p>
           </div>
           <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
